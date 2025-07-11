@@ -1,7 +1,7 @@
-mod firecrawl_client;
+pub mod firecrawl_client;
 pub mod models;
 pub mod parser;
-mod pick_n_pull;
+pub mod pick_n_pull;
 
 pub fn add(left: u64, right: u64) -> u64 {
     left + right

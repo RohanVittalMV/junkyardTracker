@@ -8,6 +8,9 @@ use pick_n_pull::PicknPullSearch;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Load .env file
+    dotenv::dotenv().ok();
+    
     // Get API key from environment variable
     let api_key = env::var("FIRECRAWL_API_KEY")
         .expect("FIRECRAWL_API_KEY environment variable not set");
@@ -19,16 +22,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pnp_search = PicknPullSearch::new();
 
     // Generate URL for Subaru Impreza Wagon search
-    let search_url = pnp_search.subaru_impreza_wagon_search("84104", 50);
+    let search_url = pnp_search.subaru_impreza_wagon_search("95014", 50);
     println!("Searching URL: {}", search_url);
 
     // Crawl the webpage
     println!("Crawling webpage...");
     let response = client.crawl_webpage(&search_url).await?;
-    println!("Response status: {}", response.status);
+    println!("Response success: {}", response.success);
 
     // Parse the response
-    let items = parse_junkyard_page(&response.html, &search_url);
+    let items = if let Some(data) = &response.data {
+        if let Some(markdown) = &data.markdown {
+            parse_junkyard_page(markdown, &search_url)
+        } else {
+            println!("No markdown data in response");
+            Vec::new()
+        }
+    } else {
+        println!("No data in response");
+        Vec::new()
+    };
 
     // Print the results
     println!("Found {} vehicles:", items.len());

@@ -4,9 +4,15 @@ use std::error::Error as StdError;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CrawlResponse {
-    pub html: String,
-    pub status: u16,
-    pub url: String,
+    pub success: bool,
+    pub data: Option<CrawlData>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CrawlData {
+    pub markdown: Option<String>,
+    pub html: Option<String>,
+    pub url: Option<String>,
 }
 
 #[derive(Debug)]
@@ -36,7 +42,7 @@ impl FirecrawlClient {
     pub fn new(api_key: String) -> Self {
         Self {
             api_key,
-            base_url: "https://api.firecrawl.com".to_string(),
+            base_url: "https://api.firecrawl.dev".to_string(),
             client: Client::new(),
         }
     }
@@ -44,22 +50,26 @@ impl FirecrawlClient {
     pub async fn crawl_webpage(&self, url: &str) -> Result<CrawlResponse, Error> {
         let response = self
             .client
-            .post(&format!("{}/v1/crawl", self.base_url))
+            .post(&format!("{}/v1/scrape", self.base_url))
             .header("Authorization", format!("Bearer {}", self.api_key))
+            .header("Content-Type", "application/json")
             .json(&serde_json::json!({
                 "url": url,
-                "render_js": true,
-                "wait_for": 2000  // Wait 2 seconds for JS to load
+                "formats": ["markdown"],
+                "onlyMainContent": true,
+                "parsePDF": true,
+                "maxAge": 14400000
             }))
             .send()
             .await
             .map_err(Error::RequestFailed)?;
 
         if !response.status().is_success() {
+            let status = response.status();
             let error_text = response.text().await.unwrap_or_default();
             return Err(Error::ApiError(format!(
                 "API returned error status: {}, message: {}",
-                response.status(),
+                status,
                 error_text
             )));
         }
