@@ -1,5 +1,4 @@
 use junkyardTracker::firecrawl_client::FirecrawlClient;
-use junkyardTracker::models::JunkyardItem;
 use junkyardTracker::parser::parse_junkyard_page;
 use std::env;
 

@@ -1,3 +1,4 @@
+pub mod api;
 pub mod firecrawl_client;
 pub mod models;
 pub mod parser;
